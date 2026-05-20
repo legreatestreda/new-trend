@@ -1,65 +1,103 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Globe, MessageCircle, ShoppingBag, Users } from 'lucide-react'
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+            <Globe className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-lg">Diaspora</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex gap-3">
+          <Link href="/login">
+            <Button variant="ghost">Connexion</Button>
+          </Link>
+          <Link href="/register">
+            <Button className="bg-green-600 hover:bg-green-700">S&apos;inscrire</Button>
+          </Link>
         </div>
-      </main>
-    </div>
-  );
+      </header>
+
+      {/* Hero */}
+      <section className="flex flex-col items-center text-center px-6 py-20 max-w-3xl mx-auto">
+        <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full mb-6">
+          La communauté africaine connectée
+        </span>
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+          Restez connecté à vos racines,<br />
+          <span className="text-green-600">où que vous soyez</span>
+        </h1>
+        <p className="text-lg text-gray-500 mb-10 max-w-xl">
+          Échangez, vendez, discutez et créez des liens avec la diaspora africaine et le continent. Une seule plateforme pour votre communauté.
+        </p>
+        <div className="flex gap-4">
+          <Link href="/register">
+            <Button size="lg" className="bg-green-600 hover:bg-green-700 px-8">
+              Rejoindre gratuitement
+            </Button>
+          </Link>
+          <Link href="/explore">
+            <Button size="lg" variant="outline" className="px-8">
+              Explorer
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 py-16 max-w-6xl mx-auto">
+        {[
+          {
+            icon: <Users className="w-6 h-6 text-green-600" />,
+            title: 'Réseau communautaire',
+            desc: 'Suivez des membres, partagez vos expériences, restez informé.',
+          },
+          {
+            icon: <ShoppingBag className="w-6 h-6 text-green-600" />,
+            title: 'Marketplace',
+            desc: 'Achetez et vendez entre membres de la communauté.',
+          },
+          {
+            icon: <MessageCircle className="w-6 h-6 text-green-600" />,
+            title: 'Messagerie privée',
+            desc: 'Discutez en temps réel avec n\'importe quel membre.',
+          },
+          {
+            icon: <Globe className="w-6 h-6 text-green-600" />,
+            title: 'Diaspora mondiale',
+            desc: 'Connectez-vous avec des Africains partout dans le monde.',
+          },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col gap-3 p-6 rounded-2xl border border-gray-100 hover:border-green-100 hover:bg-green-50/30 transition">
+            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              {f.icon}
+            </div>
+            <h3 className="font-semibold text-gray-900">{f.title}</h3>
+            <p className="text-sm text-gray-500">{f.desc}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* CTA */}
+      <section className="bg-green-600 mx-6 rounded-3xl px-8 py-16 text-center max-w-4xl lg:mx-auto mb-16">
+        <h2 className="text-3xl font-bold text-white mb-4">Prêt à rejoindre la communauté ?</h2>
+        <p className="text-green-100 mb-8">Gratuit, rapide, et fait pour vous.</p>
+        <Link href="/register">
+          <Button size="lg" className="bg-white text-green-600 hover:bg-green-50 px-10">
+            Créer mon compte
+          </Button>
+        </Link>
+      </section>
+
+      {/* Footer */}
+      <footer className="text-center text-sm text-gray-400 py-8 border-t">
+        © 2025 Diaspora Platform — Fait avec ❤️ pour la communauté africaine
+      </footer>
+    </main>
+  )
 }
