@@ -5,14 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ConversationList } from '@/components/messages/conversation-list'
 import { getOrCreateConversation } from '@/lib/actions/messages'
 
-export default function MessagesPage() {
+export default function MessagesClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const userId = searchParams.get('user')
 
   useEffect(() => {
     if (!userId) return
-    getOrCreateConversation(userId).then(convId => {
+
+    getOrCreateConversation(userId).then((convId) => {
       router.replace(`/messages/${convId}`)
     })
   }, [userId, router])
