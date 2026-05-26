@@ -1,4 +1,3 @@
-// profile-header
 'use client'
 
 import { useState } from 'react'
@@ -29,6 +28,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   const { user } = useUser()
   const router = useRouter()
+
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [followers, setFollowers] = useState(followersCount)
   const [loading, setLoading] = useState(false)
@@ -37,7 +37,9 @@ export function ProfileHeader({
 
   const handleFollow = async () => {
     if (!user) return
+
     setLoading(true)
+
     const supabase = createClient()
 
     if (isFollowing) {
@@ -46,120 +48,159 @@ export function ProfileHeader({
         .delete()
         .eq('follower_id', user.id)
         .eq('following_id', profile.id)
+
       setIsFollowing(false)
-      setFollowers(f => f - 1)
+      setFollowers(v => v - 1)
     } else {
       await supabase
         .from('followers')
-        .insert({ follower_id: user.id, following_id: profile.id })
+        .insert({
+          follower_id: user.id,
+          following_id: profile.id,
+        })
+
       setIsFollowing(true)
-      setFollowers(f => f + 1)
+      setFollowers(v => v + 1)
     }
+
     setLoading(false)
   }
 
   const handleMessage = async () => {
     try {
-      const convId = await getOrCreateConversation(profile.id)
-      router.push(`/messages/${convId}`)
+      const id = await getOrCreateConversation(profile.id)
+      router.push(`/messages/${id}`)
     } catch {
-      toast.error('Erreur lors de l\'ouverture du chat')
+      toast.error('Erreur ouverture chat')
     }
   }
 
   return (
-    <div className="bg-white rounded-2xl border overflow-hidden">
-      {/* Banner */}
-      <div className="h-28 bg-gradient-to-br from-green-400 to-green-600" />
+    <div className="bg-white border border-[#ECECEC] rounded-2xl overflow-hidden">
 
-      <div className="px-5 pb-5">
-        {/* Avatar */}
-        <div className="flex items-end justify-between -mt-10 mb-4">
+      {/* BANNER */}
+      <div className="h-28 bg-gradient-to-br from-[#F5F5F5] to-[#EDEDED]" />
+
+      <div className="px-6 pb-6">
+
+        {/* HEADER ROW */}
+        <div className="flex items-end justify-between -mt-10">
+
+          {/* AVATAR */}
           <Avatar className="w-20 h-20 border-4 border-white shadow-sm">
             <AvatarImage src={profile.avatar_url || ''} />
-            <AvatarFallback className="bg-green-100 text-green-700 text-2xl font-bold">
+            <AvatarFallback className="bg-[#F5F5F5] text-[#666] text-xl font-medium">
               {profile.fullname?.charAt(0)?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
-          {!isOwnProfile && (
-            <div className="flex gap-2 mt-10">
+          {/* ACTIONS */}
+          {!isOwnProfile ? (
+            <div className="flex gap-2">
+
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1.5"
                 onClick={handleMessage}
+                className="h-9 border-[#EAEAEA] text-[#555] hover:text-[#111]"
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4 mr-1" />
                 Message
               </Button>
+
               <Button
                 size="sm"
-                className={isFollowing
-                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 gap-1.5'
-                  : 'bg-green-600 hover:bg-green-700 gap-1.5'
-                }
                 onClick={handleFollow}
                 disabled={loading}
+                className={`h-9 px-4 rounded-full transition ${
+                  isFollowing
+                    ? 'bg-[#F5F5F5] text-[#111] hover:bg-[#EAEAEA]'
+                    : 'bg-[#111] text-white hover:opacity-90'
+                }`}
               >
-                {isFollowing
-                  ? <><UserMinus className="w-4 h-4" /> Suivi</>
-                  : <><UserPlus className="w-4 h-4" /> Suivre</>
-                }
+                {isFollowing ? (
+                  <>
+                    <UserMinus className="w-4 h-4 mr-1" />
+                    Suivi
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Suivre
+                  </>
+                )}
               </Button>
-            </div>
-          )}
 
-          {isOwnProfile && (
+            </div>
+          ) : (
             <Button
               size="sm"
               variant="outline"
-              className="mt-10"
               onClick={() => router.push('/settings')}
+              className="h-9 border-[#EAEAEA] text-[#555]"
             >
-              Modifier le profil
+              Modifier
             </Button>
           )}
         </div>
 
-        {/* Infos */}
-        <div className="space-y-2">
-          <h1 className="text-xl font-bold text-gray-900">{profile.fullname}</h1>
+        {/* INFO */}
+        <div className="mt-4 space-y-2">
+
+          <h1 className="text-xl font-medium text-[#111]">
+            {profile.fullname}
+          </h1>
 
           {profile.bio && (
-            <p className="text-sm text-gray-600 leading-relaxed">{profile.bio}</p>
+            <p className="text-sm text-[#666] leading-relaxed max-w-xl">
+              {profile.bio}
+            </p>
           )}
 
-          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+          {/* LOCATION */}
+          <div className="flex flex-wrap gap-3 text-xs text-[#888] pt-1">
+
             {profile.current_country && (
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
-                {profile.city ? `${profile.city}, ` : ''}{profile.current_country}
+                {profile.city ? `${profile.city}, ` : ''}
+                {profile.current_country}
               </span>
             )}
+
             {profile.origin_country && (
-              <span className="flex items-center gap-1">
-                🌍 Origine : {profile.origin_country}
-              </span>
+              <span>🌍 {profile.origin_country}</span>
             )}
+
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-5 pt-2">
-            <div className="text-center">
-              <p className="text-sm font-bold text-gray-900">{postsCount}</p>
-              <p className="text-xs text-gray-500">Publications</p>
+          {/* STATS */}
+          <div className="flex gap-8 pt-4">
+
+            <div>
+              <p className="text-sm font-medium text-[#111]">
+                {postsCount}
+              </p>
+              <p className="text-xs text-[#777]">Publications</p>
             </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-gray-900">{followers}</p>
-              <p className="text-xs text-gray-500">Abonnés</p>
+
+            <div>
+              <p className="text-sm font-medium text-[#111]">
+                {followers}
+              </p>
+              <p className="text-xs text-[#777]">Abonnés</p>
             </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-gray-900">{followingCount}</p>
-              <p className="text-xs text-gray-500">Abonnements</p>
+
+            <div>
+              <p className="text-sm font-medium text-[#111]">
+                {followingCount}
+              </p>
+              <p className="text-xs text-[#777]">Abonnements</p>
             </div>
+
           </div>
         </div>
+
       </div>
     </div>
   )

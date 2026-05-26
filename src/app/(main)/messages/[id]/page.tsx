@@ -7,22 +7,32 @@ type MemberRow = {
   user: User
 }
 
-export default async function ConversationPage({ params }: { params: { id: string } }) {
+export default async function ConversationPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   if (!user) notFound()
 
   const { data: members } = await supabase
     .from('conversation_members')
     .select('user:users(*)')
-    .eq('conversation_id', params.id)
+    .eq('conversation_id', id)
     .neq('user_id', user.id)
 
-  const otherUser: User | null = (members as unknown as MemberRow[])?.[0]?.user || null
+  const otherUser: User | null =
+    (members as unknown as MemberRow[])?.[0]?.user || null
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-2xl border overflow-hidden">
-      <ChatWindow conversationId={params.id} otherUser={otherUser} />
+      <ChatWindow conversationId={id} otherUser={otherUser} />
     </div>
   )
 }

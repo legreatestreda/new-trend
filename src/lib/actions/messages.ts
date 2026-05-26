@@ -1,4 +1,3 @@
-// messages
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -32,15 +31,28 @@ export async function getOrCreateConversation(otherUserId: string): Promise<stri
   const { data: newConvo, error } = await supabase
     .from('conversations')
     .insert({})
-    .select()
+    .select('id')
     .single()
 
-  if (error || !newConvo) throw new Error('Erreur création conversation')
+  if (error) {
+    console.error('Erreur création conversation:', error)
+    throw new Error(error.message)
+  }
 
-  await supabase.from('conversation_members').insert([
-    { conversation_id: newConvo.id, user_id: user.id },
-    { conversation_id: newConvo.id, user_id: otherUserId },
-  ])
+  if (!newConvo) throw new Error('Pas de conversation retournée')
+
+  // Ajouter les deux membres
+  const { error: membersError } = await supabase
+    .from('conversation_members')
+    .insert([
+      { conversation_id: newConvo.id, user_id: user.id },
+      { conversation_id: newConvo.id, user_id: otherUserId },
+    ])
+
+  if (membersError) {
+    console.error('Erreur ajout membres:', membersError)
+    throw new Error(membersError.message)
+  }
 
   return newConvo.id
 }

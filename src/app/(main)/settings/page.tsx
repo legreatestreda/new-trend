@@ -15,11 +15,11 @@ import { Loader2, Camera, ArrowLeft } from 'lucide-react'
 import { useUser } from '@/lib/hooks/use-user'
 
 const schema = z.object({
-  fullname: z.string().min(2, 'Minimum 2 caractères'),
-  bio: z.string().max(160, 'Maximum 160 caractères').optional(),
-  origin_country: z.string().min(2, 'Requis'),
-  current_country: z.string().min(2, 'Requis'),
-  city: z.string().min(2, 'Requis'),
+  fullname: z.string().min(2),
+  bio: z.string().max(160).optional(),
+  origin_country: z.string().min(2),
+  current_country: z.string().min(2),
+  city: z.string().min(2),
 })
 
 type FormData = z.infer<typeof schema>
@@ -59,13 +59,11 @@ export default function SettingsPage() {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0]
-
     if (!file || !user) return
 
     setUploadingAvatar(true)
 
     const supabase = createClient()
-
     const ext = file.name.split('.').pop()
     const path = `avatars/${user.id}/avatar.${ext}`
 
@@ -74,10 +72,7 @@ export default function SettingsPage() {
       .upload(path, file, { upsert: true })
 
     if (!error) {
-      const { data } = supabase.storage
-        .from('images')
-        .getPublicUrl(path)
-
+      const { data } = supabase.storage.from('images').getPublicUrl(path)
       const url = `${data.publicUrl}?t=${Date.now()}`
 
       setLocalAvatar(url)
@@ -87,9 +82,9 @@ export default function SettingsPage() {
         .update({ avatar_url: url })
         .eq('id', user.id)
 
-      toast.success('Photo mise à jour !')
+      toast.success('Photo mise à jour')
     } else {
-      toast.error("Erreur lors de l'upload")
+      toast.error("Erreur upload")
     }
 
     setUploadingAvatar(false)
@@ -114,9 +109,9 @@ export default function SettingsPage() {
       .eq('id', user.id)
 
     if (error) {
-      toast.error('Erreur lors de la mise à jour')
+      toast.error('Erreur mise à jour')
     } else {
-      toast.success('Profil mis à jour !')
+      toast.success('Profil mis à jour')
       router.push(`/profile/${user.id}`)
     }
 
@@ -124,32 +119,44 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto space-y-4">
+    <div className="max-w-xl mx-auto space-y-6">
+
+      {/* BACK */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 text-sm text-[#777] hover:text-[#111] transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Retour
       </button>
 
-      <div className="bg-white rounded-2xl border p-6 space-y-6">
-        <h1 className="text-xl font-bold text-gray-900">
-          Modifier le profil
-        </h1>
+      {/* CARD */}
+      <div className="bg-white border border-[#ECECEC] rounded-2xl p-6 space-y-6">
 
-        {/* Avatar */}
+        {/* TITLE */}
+        <div>
+          <h1 className="text-lg font-medium text-[#111]">
+            Paramètres du profil
+          </h1>
+          <p className="text-sm text-[#777] mt-1">
+            Gérez vos informations personnelles
+          </p>
+        </div>
+
+        {/* AVATAR */}
         <div className="flex items-center gap-4">
-          <div className="relative">
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={avatarUrl} />
 
-              <AvatarFallback className="bg-green-100 text-green-700 text-2xl font-bold">
+          <div className="relative">
+
+            <Avatar className="w-20 h-20 border border-[#EAEAEA]">
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="bg-[#F5F5F5] text-[#666] text-xl">
                 {profile?.fullname?.charAt(0)?.toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
-            <label className="absolute bottom-0 right-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-700 transition-colors">
+            <label className="absolute bottom-0 right-0 w-7 h-7 bg-[#111] rounded-full flex items-center justify-center cursor-pointer hover:opacity-90 transition">
+
               <input
                 type="file"
                 accept="image/*"
@@ -162,130 +169,107 @@ export default function SettingsPage() {
               ) : (
                 <Camera className="w-3.5 h-3.5 text-white" />
               )}
+
             </label>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-[#111]">
               {profile?.fullname}
             </p>
-
-            <p className="text-xs text-gray-500">
-              Cliquez sur l&apos;icône pour changer la photo
+            <p className="text-xs text-[#777]">
+              Cliquez pour changer la photo
             </p>
           </div>
+
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
-              Nom complet <span className="text-red-500">*</span>
+        {/* FORM */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+          {/* NAME */}
+          <div>
+            <label className="text-xs text-[#777]">
+              Nom complet
             </label>
 
             <Input
               {...register('fullname')}
-              className={errors.fullname ? 'border-red-300' : ''}
+              className="mt-1 border-[#EAEAEA] focus:border-[#111]"
             />
 
             {errors.fullname && (
-              <p className="text-xs text-red-500">
-                {errors.fullname.message}
+              <p className="text-xs text-red-500 mt-1">
+                Requis
               </p>
             )}
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
+          {/* BIO */}
+          <div>
+            <label className="text-xs text-[#777]">
               Bio
             </label>
 
             <Textarea
               rows={3}
               {...register('bio')}
-              className={errors.bio ? 'border-red-300' : ''}
+              className="mt-1 border-[#EAEAEA] focus:border-[#111]"
             />
-
-            {errors.bio && (
-              <p className="text-xs text-red-500">
-                {errors.bio.message}
-              </p>
-            )}
           </div>
 
+          {/* COUNTRIES */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Pays d&apos;origine{' '}
-                <span className="text-red-500">*</span>
-              </label>
 
+            <div>
+              <label className="text-xs text-[#777]">
+                Origine
+              </label>
               <Input
                 {...register('origin_country')}
-                className={
-                  errors.origin_country ? 'border-red-300' : ''
-                }
+                className="mt-1 border-[#EAEAEA] focus:border-[#111]"
               />
-
-              {errors.origin_country && (
-                <p className="text-xs text-red-500">
-                  {errors.origin_country.message}
-                </p>
-              )}
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Pays actuel{' '}
-                <span className="text-red-500">*</span>
+            <div>
+              <label className="text-xs text-[#777]">
+                Actuel
               </label>
-
               <Input
                 {...register('current_country')}
-                className={
-                  errors.current_country ? 'border-red-300' : ''
-                }
+                className="mt-1 border-[#EAEAEA] focus:border-[#111]"
               />
-
-              {errors.current_country && (
-                <p className="text-xs text-red-500">
-                  {errors.current_country.message}
-                </p>
-              )}
             </div>
+
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
-              Ville <span className="text-red-500">*</span>
+          {/* CITY */}
+          <div>
+            <label className="text-xs text-[#777]">
+              Ville
             </label>
 
             <Input
               {...register('city')}
-              className={errors.city ? 'border-red-300' : ''}
+              className="mt-1 border-[#EAEAEA] focus:border-[#111]"
             />
-
-            {errors.city && (
-              <p className="text-xs text-red-500">
-                {errors.city.message}
-              </p>
-            )}
           </div>
 
+          {/* BUTTON */}
           <Button
             type="submit"
-            className="w-full bg-green-600 hover:bg-green-700"
             disabled={loading}
+            className="w-full bg-[#111] hover:opacity-90 text-white"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              'Enregistrer les modifications'
+              'Enregistrer'
             )}
           </Button>
+
         </form>
+
       </div>
     </div>
   )

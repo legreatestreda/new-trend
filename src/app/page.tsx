@@ -1,103 +1,222 @@
+'use client'
+
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Globe, MessageCircle, ShoppingBag, Users } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowRight } from 'lucide-react'
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-            <Globe className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-lg">Diaspora</span>
-        </div>
-        <div className="flex gap-3">
-          <Link href="/login">
-            <Button variant="ghost">Connexion</Button>
+    <main className="min-h-screen bg-white text-[#111] overflow-hidden">
+      {/* NAVBAR */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+          >
+            <div className="w-9 h-9 rounded-full bg-[#111]" />
+
+            <span className="text-[15px] font-medium tracking-tight">
+              New Trend
+            </span>
           </Link>
+
+          
+
+          {/* CTA */}
           <Link href="/register">
-            <Button className="bg-green-600 hover:bg-green-700">S&apos;inscrire</Button>
+            <button className="h-10 px-5 rounded-full bg-[#111] text-white text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+              Commencer
+            </button>
           </Link>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center text-center px-6 py-20 max-w-3xl mx-auto">
-        <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full mb-6">
-          La communauté africaine connectée
-        </span>
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-          Restez connecté à vos racines,<br />
-          <span className="text-green-600">où que vous soyez</span>
-        </h1>
-        <p className="text-lg text-gray-500 mb-10 max-w-xl">
-          Échangez, vendez, discutez et créez des liens avec la diaspora africaine et le continent. Une seule plateforme pour votre communauté.
-        </p>
-        <div className="flex gap-4">
-          <Link href="/register">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700 px-8">
-              Rejoindre gratuitement
-            </Button>
-          </Link>
-          <Link href="/explore">
-            <Button size="lg" variant="outline" className="px-8">
-              Explorer
-            </Button>
-          </Link>
+      {/* HERO */}
+      <section className="relative pt-36 pb-24 px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Small badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="mb-8"
+          >
+            <span className="inline-flex items-center rounded-full border border-[#E5E5E5] px-4 py-2 text-[12px] text-[#555] bg-[#FAFAFA]">
+              Conçu pour les communautés africaines du monde entier
+            </span>
+          </motion.div>
+
+          {/* Main content */}
+          <div className="max-w-4xl">
+            <motion.h1
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9 }}
+              className="text-[48px] md:text-[72px] lg:text-[88px] leading-[0.98] tracking-[-0.06em] font-medium"
+            >
+              Restez connecté
+              <br />
+              où que
+              <br />
+              vous soyez.
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.9,
+                delay: 0.1,
+              }}
+              className="mt-8 max-w-lg text-[16px] leading-relaxed text-[#666]"
+            >
+              Une plateforme moderne pensée pour connecter les communautés
+              africaines, les opportunités et les cultures à travers le monde.
+            </motion.p>
+
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.9,
+                delay: 0.2,
+              }}
+              className="flex items-center gap-5 mt-10"
+            >
+              <Link href="/register">
+                <button className="group h-12 px-6 rounded-full bg-[#111] text-white text-[14px] flex items-center gap-3 hover:shadow-xl transition-all duration-300">
+                  Rejoindre maintenant
+
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
+              </Link>
+
+              <Link
+                href="/explore"
+                className="text-[14px] text-[#666] hover:text-black transition-colors"
+              >
+                Explorer la plateforme
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Floating UI */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{
+              opacity: 1,
+              y: [0, -8, 0],
+            }}
+            transition={{
+              opacity: {
+                duration: 1,
+              },
+              y: {
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              },
+            }}
+            className="relative mt-24"
+          >
+            <div className="rounded-[36px] border border-[#ECECEC] bg-white shadow-[0_20px_80px_rgba(0,0,0,0.06)] overflow-hidden">
+              {/* Top */}
+              <div className="flex items-center justify-between px-8 py-5 border-b border-[#F1F1F1]">
+                <div>
+                  <p className="text-sm text-[#888]">
+                    Fil communautaire
+                  </p>
+
+                  <h3 className="text-[18px] font-medium mt-1">
+                    Réseau Africain Global
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+
+                  <span className="text-sm text-[#666]">
+                    En ligne
+                  </span>
+                </div>
+              </div>
+
+              {/* Feed */}
+              <div className="grid lg:grid-cols-3 gap-5 p-6">
+                {[
+                  {
+                    title: 'Entrepreneurs à Paris 🇫🇷',
+                    text: 'Découvrez des fondateurs, événements et opportunités.',
+                  },
+                  {
+                    title: 'Marketplace 🌍',
+                    text: 'Achetez et vendez au sein de votre communauté.',
+                  },
+                  {
+                    title: 'Communautés 💬',
+                    text: 'Gardez un lien avec votre culture et votre réseau.',
+                  },
+                ].map((card, i) => (
+                  <motion.div
+                    key={i}
+                    whileHover={{
+                      y: -5,
+                    }}
+                    transition={{
+                      duration: 0.3,
+                    }}
+                    className="rounded-[24px] border border-[#F0F0F0] bg-[#FAFAFA] p-5"
+                  >
+                    <h4 className="text-[16px] font-medium leading-tight">
+                      {card.title}
+                    </h4>
+
+                    <p className="mt-3 text-[14px] leading-relaxed text-[#666]">
+                      {card.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Bottom */}
+              <div className="px-8 py-5 border-t border-[#F1F1F1] flex items-center justify-between">
+                <div>
+                  <p className="text-[24px] font-medium tracking-tight">
+                    12K+
+                  </p>
+
+                  <p className="text-sm text-[#777] mt-1">
+                    Membres actifs
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[24px] font-medium tracking-tight">
+                    35+
+                  </p>
+
+                  <p className="text-sm text-[#777] mt-1">
+                    Pays connectés
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[24px] font-medium tracking-tight">
+                    24/7
+                  </p>
+
+                  <p className="text-sm text-[#777] mt-1">
+                    Communauté active
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
-
-      {/* Features */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 py-16 max-w-6xl mx-auto">
-        {[
-          {
-            icon: <Users className="w-6 h-6 text-green-600" />,
-            title: 'Réseau communautaire',
-            desc: 'Suivez des membres, partagez vos expériences, restez informé.',
-          },
-          {
-            icon: <ShoppingBag className="w-6 h-6 text-green-600" />,
-            title: 'Marketplace',
-            desc: 'Achetez et vendez entre membres de la communauté.',
-          },
-          {
-            icon: <MessageCircle className="w-6 h-6 text-green-600" />,
-            title: 'Messagerie privée',
-            desc: 'Discutez en temps réel avec n\'importe quel membre.',
-          },
-          {
-            icon: <Globe className="w-6 h-6 text-green-600" />,
-            title: 'Diaspora mondiale',
-            desc: 'Connectez-vous avec des Africains partout dans le monde.',
-          },
-        ].map((f, i) => (
-          <div key={i} className="flex flex-col gap-3 p-6 rounded-2xl border border-gray-100 hover:border-green-100 hover:bg-green-50/30 transition">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              {f.icon}
-            </div>
-            <h3 className="font-semibold text-gray-900">{f.title}</h3>
-            <p className="text-sm text-gray-500">{f.desc}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* CTA */}
-      <section className="bg-green-600 mx-6 rounded-3xl px-8 py-16 text-center max-w-4xl lg:mx-auto mb-16">
-        <h2 className="text-3xl font-bold text-white mb-4">Prêt à rejoindre la communauté ?</h2>
-        <p className="text-green-100 mb-8">Gratuit, rapide, et fait pour vous.</p>
-        <Link href="/register">
-          <Button size="lg" className="bg-white text-green-600 hover:bg-green-50 px-10">
-            Créer mon compte
-          </Button>
-        </Link>
-      </section>
-
-      {/* Footer */}
-      <footer className="text-center text-sm text-gray-400 py-8 border-t">
-        © 2025 Diaspora Platform — Fait avec ❤️ pour la communauté africaine
-      </footer>
     </main>
   )
 }

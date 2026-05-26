@@ -7,12 +7,15 @@ import { BackButton } from '@/components/shared/back-button'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function ListingPage({ params }: { params: { id: string } }) {
+
+export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   const supabase = await createClient()
   const { data: listing } = await supabase
     .from('listings')
     .select('*, user:users(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!listing) notFound()
