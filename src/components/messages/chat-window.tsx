@@ -13,7 +13,7 @@ import {
   AvatarImage,
 } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Send, ArrowLeft, Circle } from 'lucide-react'
+import { Send, ArrowLeft } from 'lucide-react'
 import { useUser } from '@/lib/hooks/use-user'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -37,16 +37,17 @@ export function ChatWindow({
   const [isOnline, setIsOnline] = useState(false)
 
   const bottomRef = useRef<HTMLDivElement>(null)
-  const typingTimeoutRef = useRef<NodeJS.Timeout>()
 
-  /* SCROLL AUTO */
+  // ✅ CORRECTION
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, otherTyping])
 
-  /* ONLINE STATUS */
   useEffect(() => {
     if (!otherUser?.id) return
+
     const supabase = createClient()
 
     const checkOnline = async () => {
@@ -63,27 +64,32 @@ export function ChatWindow({
     }
 
     checkOnline()
+
     const interval = setInterval(checkOnline, 30000)
+
     return () => clearInterval(interval)
   }, [otherUser?.id])
 
-  /* LAST SEEN UPDATE */
   useEffect(() => {
     if (!user?.id) return
+
     const supabase = createClient()
 
     const update = () =>
       supabase
         .from('users')
-        .update({ last_seen: new Date().toISOString() })
+        .update({
+          last_seen: new Date().toISOString(),
+        })
         .eq('id', user.id)
 
     update()
+
     const interval = setInterval(update, 60000)
+
     return () => clearInterval(interval)
   }, [user?.id])
 
-  /* TYPING */
   useEffect(() => {
     const supabase = createClient()
 
@@ -92,7 +98,10 @@ export function ChatWindow({
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload.user_id !== user?.id) {
           setOtherTyping(true)
-          setTimeout(() => setOtherTyping(false), 1500)
+
+          setTimeout(() => {
+            setOtherTyping(false)
+          }, 1500)
         }
       })
       .subscribe()
@@ -108,12 +117,15 @@ export function ChatWindow({
     supabase.channel(`typing:${conversationId}`).send({
       type: 'broadcast',
       event: 'typing',
-      payload: { user_id: user?.id },
+      payload: {
+        user_id: user?.id,
+      },
     })
   }
 
   const handleSend = async () => {
     if (!text.trim()) return
+
     setSending(true)
 
     try {
@@ -121,20 +133,28 @@ export function ChatWindow({
       setText('')
     } catch {
       toast.error("Erreur d'envoi")
+    } finally {
+      setSending(false)
     }
-
-    setSending(false)
   }
 
   const handleTyping = (value: string) => {
     setText(value)
+
     broadcastTyping()
 
-    clearTimeout(typingTimeoutRef.current)
-    typingTimeoutRef.current = setTimeout(() => {}, 1000)
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      // futur code typing stop
+    }, 1000)
   }
 
   return (
+    // ton JSX actuel...
+
     <div className="flex flex-col h-[100dvh] bg-gray-50">
 
       {/* HEADER */}
