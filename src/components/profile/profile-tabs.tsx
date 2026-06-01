@@ -16,90 +16,84 @@ export function ProfileTabs({
 }) {
   const [tab, setTab] = useState<'posts' | 'listings'>('posts')
 
+  const TabButton = ({
+    active,
+    onClick,
+    icon: Icon,
+    label,
+    count,
+  }: any) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex-1 flex items-center justify-center gap-2",
+        "py-3 text-sm font-medium transition",
+        active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"
+      )}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="hidden sm:inline">{label}</span>
+      <span className="text-xs text-gray-400">({count})</span>
+
+      {/* ACTIVE INDICATOR */}
+      {active && (
+        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[2px] bg-gray-900 rounded-full" />
+      )}
+    </button>
+  )
+
   return (
-    <div className="bg-white border border-[#ECECEC] rounded-2xl overflow-hidden">
+    <div className="bg-white border rounded-2xl overflow-hidden">
 
       {/* TABS */}
-      <div className="flex border-b border-[#F2F2F2] bg-white">
+      <div className="flex border-b bg-white">
 
-        {/* POSTS */}
-        <button
+        <TabButton
+          active={tab === 'posts'}
           onClick={() => setTab('posts')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 py-3 text-sm transition relative',
-            tab === 'posts'
-              ? 'text-[#111]'
-              : 'text-[#777] hover:text-[#111]'
-          )}
-        >
-          <FileText className="w-4 h-4" />
-          Publications
-          <span className="text-xs text-[#999]">
-            ({posts.length})
-          </span>
+          icon={FileText}
+          label="Publications"
+          count={posts.length}
+        />
 
-          {tab === 'posts' && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[2px] bg-[#111] rounded-full" />
-          )}
-        </button>
-
-        {/* LISTINGS */}
-        <button
+        <TabButton
+          active={tab === 'listings'}
           onClick={() => setTab('listings')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 py-3 text-sm transition relative',
-            tab === 'listings'
-              ? 'text-[#111]'
-              : 'text-[#777] hover:text-[#111]'
-          )}
-        >
-          <Grid className="w-4 h-4" />
-          Annonces
-          <span className="text-xs text-[#999]">
-            ({listings.length})
-          </span>
-
-          {tab === 'listings' && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[2px] bg-[#111] rounded-full" />
-          )}
-        </button>
-
+          icon={Grid}
+          label="Annonces"
+          count={listings.length}
+        />
       </div>
 
       {/* CONTENT */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
 
+        {/* POSTS */}
         {tab === 'posts' && (
           <div className="space-y-4">
             {posts.length === 0 ? (
-              <div className="py-14 text-center">
-                <div className="text-sm text-[#999]">
-                  Aucune publication
-                </div>
+              <div className="py-16 text-center text-sm text-gray-400">
+                Aucune publication pour le moment
               </div>
             ) : (
-              posts.map(post => (
+              posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))
             )}
           </div>
         )}
 
+        {/* LISTINGS */}
         {tab === 'listings' && (
           <div>
             {listings.length === 0 ? (
-              <div className="py-14 text-center">
-                <div className="text-sm text-[#999]">
-                  Aucune annonce
-                </div>
+              <div className="py-16 text-center text-sm text-gray-400">
+                Aucune annonce pour le moment
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {listings.map(listing => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {listings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>
             )}

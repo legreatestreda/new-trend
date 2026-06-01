@@ -3,11 +3,13 @@ export type User = {
   id: string
   fullname: string
   avatar_url: string | null
+  cover_url: string | null  // ← ajouter
   bio: string | null
   origin_country: string | null
   current_country: string | null
   city: string | null
-   onboarding_completed: boolean  // ← ajouter
+  last_seen: string | null  // ← ajouter
+  onboarding_completed: boolean
   created_at: string
 }
 

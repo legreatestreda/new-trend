@@ -8,10 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { toggleLike, createComment, deletePost } from '@/lib/actions/posts'
 import { toast } from 'sonner'
-import { Heart, MessageCircle, Trash2, Send, MapPin } from 'lucide-react'
+import {
+  Heart,
+  MessageCircle,
+  Trash2,
+  Send,
+  MapPin,
+} from 'lucide-react'
 import { useUser } from '@/lib/hooks/use-user'
 import type { Post, Comment } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
+import { ReportButton } from '@/components/shared/report-button'
+import { HashtagText } from './hashtag-text'
+import { cn } from '@/lib/utils'
 
 export function PostCard({
   post,
@@ -30,18 +39,22 @@ export function PostCard({
   const [commentText, setCommentText] = useState('')
   const [loadingComment, setLoadingComment] = useState(false)
 
+  /* LIKE */
   const handleLike = async () => {
-    setLiked(v => !v)
-    setLikesCount(v => (liked ? v - 1 : v + 1))
+    const newLiked = !liked
+
+    setLiked(newLiked)
+    setLikesCount((v) => (newLiked ? v + 1 : v - 1))
 
     try {
       await toggleLike(post.id)
     } catch {
-      setLiked(v => !v)
-      setLikesCount(v => (liked ? v + 1 : v - 1))
+      setLiked(liked)
+      setLikesCount((v) => (liked ? v + 1 : v - 1))
     }
   }
 
+  /* COMMENTS */
   const loadComments = async () => {
     if (showComments) return setShowComments(false)
 
@@ -81,6 +94,7 @@ export function PostCard({
     setLoadingComment(false)
   }
 
+  /* DELETE */
   const handleDelete = async () => {
     try {
       await deletePost(post.id)
@@ -91,34 +105,46 @@ export function PostCard({
     }
   }
 
+  /* MENTIONS */
+  function renderComment(content: string) {
+    return content.split(/(@\w+)/g).map((part, i) =>
+      part.startsWith('@') ? (
+        <span key={i} className="text-green-600 font-medium">
+          {part}
+        </span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    )
+  }
+
   return (
-    <div className="group bg-white border border-[#ECECEC] rounded-2xl p-5 transition-all duration-300 hover:shadow-sm hover:border-[#DDDDDD]">
-      
+    <div className="bg-white border rounded-2xl p-4 sm:p-5 space-y-4">
+
       {/* HEADER */}
       <div className="flex items-start justify-between">
+
         <Link
           href={`/profile/${post.user?.id}`}
           className="flex items-center gap-3"
         >
           <Avatar className="w-9 h-9">
             <AvatarImage src={post.user?.avatar_url || ''} />
-            <AvatarFallback className="bg-[#F5F5F5] text-[#666] text-xs">
+            <AvatarFallback>
               {post.user?.fullname?.charAt(0)?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
 
-          <div>
-            <p className="text-sm font-medium text-[#111] group-hover:underline">
+          <div className="leading-tight">
+            <p className="text-sm font-medium text-gray-900">
               {post.user?.fullname}
             </p>
 
-            <div className="flex items-center gap-2 text-xs text-[#888]">
+            <div className="flex items-center gap-2 text-xs text-gray-400">
               {post.user?.current_country && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {post.user.city
-                    ? `${post.user.city}, `
-                    : ''}
+                  {post.user.city ? `${post.user.city}, ` : ''}
                   {post.user.current_country}
                 </span>
               )}
@@ -138,7 +164,7 @@ export function PostCard({
         {user?.id === post.user_id && (
           <button
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition text-[#AAA] hover:text-red-500"
+            className="text-gray-400 hover:text-red-500 transition"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -146,92 +172,113 @@ export function PostCard({
       </div>
 
       {/* CONTENT */}
-      <p className="text-sm text-[#222] leading-relaxed mt-4 whitespace-pre-wrap">
-        {post.content}
-      </p>
+      <div className="text-sm text-gray-800 whitespace-pre-wrap">
+        <HashtagText content={post.content} />
+      </div>
 
-      {/* IMAGES */}
-      {post.images?.length > 0 && (
+      {/* Images style Facebook */}
+{post.images?.length > 0 && (
+  <div className={`
+    grid gap-1 rounded-xl overflow-hidden
+    ${post.images.length === 1 ? 'grid-cols-1' : ''}
+    ${post.images.length === 2 ? 'grid-cols-2' : ''}
+    ${post.images.length >= 3 ? 'grid-cols-2' : ''}
+  `}>
+    {post.images.slice(0, 4).map((url, i) => {
+      const isLast = i === 3 && post.images.length > 4
+      const remaining = post.images.length - 4
+
+      return (
         <div
-          className={`mt-4 grid gap-2 rounded-xl overflow-hidden ${
-            post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-          }`}
+          key={i}
+          className={`
+            relative bg-gray-100 overflow-hidden
+            ${post.images.length === 1 ? 'aspect-video' : 'aspect-square'}
+            ${post.images.length === 3 && i === 0 ? 'col-span-2' : ''}
+          `}
         >
-          {post.images.slice(0, 4).map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              className="aspect-video w-full object-cover bg-[#F5F5F5]"
-            />
-          ))}
+          <img
+            src={url}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          {isLast && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="text-white text-2xl font-bold">+{remaining + 1}</span>
+            </div>
+          )}
         </div>
-      )}
+      )
+    })}
+  </div>
+)}
 
       {/* ACTIONS */}
-      <div className="flex items-center gap-6 mt-4 pt-3 border-t border-[#F2F2F2] text-sm">
-        
+      <div className="flex items-center justify-between pt-2 text-sm">
+
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1 transition ${
-            liked ? 'text-red-500' : 'text-[#888] hover:text-red-400'
-          }`}
+          className={cn(
+            "flex items-center gap-1 transition",
+            liked ? "text-red-500" : "text-gray-500"
+          )}
         >
-          <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
+          <Heart className={cn("w-4 h-4", liked && "fill-current")} />
           {likesCount}
         </button>
 
         <button
           onClick={loadComments}
-          className="flex items-center gap-1 text-[#888] hover:text-[#111] transition"
+          className="flex items-center gap-1 text-gray-500"
         >
           <MessageCircle className="w-4 h-4" />
           {post.comments_count || 0}
         </button>
+
+        <ReportButton type="post" refId={post.id} />
       </div>
 
       {/* COMMENTS */}
       {showComments && (
-        <div className="mt-4 pt-4 border-t border-[#F2F2F2] space-y-3">
-          
-          {comments.map(comment => (
+        <div className="space-y-3 pt-2 border-t">
+
+          {comments.map((comment) => (
             <div key={comment.id} className="flex gap-2">
               <Avatar className="w-7 h-7">
                 <AvatarImage src={comment.user?.avatar_url || ''} />
-                <AvatarFallback className="bg-[#F5F5F5] text-[10px] text-[#666]">
+                <AvatarFallback>
                   {comment.user?.fullname?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
 
-              <div className="bg-[#FAFAFA] border border-[#F0F0F0] rounded-xl px-3 py-2 flex-1">
-                <p className="text-xs font-medium text-[#111]">
+              <div className="bg-gray-50 border rounded-xl px-3 py-2 flex-1">
+                <p className="text-xs font-medium">
                   {comment.user?.fullname}
                 </p>
 
-                <p className="text-xs text-[#666] mt-0.5">
-                  {comment.content}
+                <p className="text-xs text-gray-600">
+                  {renderComment(comment.content)}
                 </p>
               </div>
             </div>
           ))}
 
-          {/* INPUT */}
           <div className="flex gap-2 pt-2">
             <Input
-              placeholder="Écrire un commentaire..."
               value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleComment()}
-              className="h-9 text-sm border-[#EAEAEA]"
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Ajouter un commentaire..."
+              className="text-sm"
             />
 
             <button
               onClick={handleComment}
-              disabled={!commentText.trim() || loadingComment}
-              className="h-9 px-3 rounded-lg bg-[#111] text-white hover:opacity-90 transition disabled:opacity-40"
+              className="text-green-600"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
+
         </div>
       )}
     </div>

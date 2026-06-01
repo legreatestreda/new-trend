@@ -1,72 +1,88 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useInView } from 'react-intersection-observer'
 import { PostCard } from './post-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePosts } from '@/lib/hooks/use-posts'
-import { Users } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 
 export function FeedList() {
-  const { posts, loading, refetch } = usePosts()
+  const { posts, loading, loadingMore, hasMore, loadMore, refetch } =
+    usePosts()
 
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '200px',
+  })
+
+  /* INFINITE SCROLL */
+  useEffect(() => {
+    if (inView && hasMore && !loadingMore) {
+      loadMore()
+    }
+  }, [inView, hasMore, loadingMore, loadMore])
+
+  /* LOADING STATE */
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
+      <div className="space-y-4 px-3 sm:px-0">
+        {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-2xl border border-[#ECECEC] p-5 space-y-4"
+            className="bg-white rounded-2xl border p-4 space-y-3"
           >
             <div className="flex items-center gap-3">
               <Skeleton className="w-9 h-9 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-36" />
-                <Skeleton className="h-3 w-24" />
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-20" />
               </div>
             </div>
 
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-8 w-full rounded-lg" />
           </div>
         ))}
       </div>
     )
   }
 
+  /* EMPTY STATE */
   if (posts.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-24 text-center"
-      >
-        <div className="w-14 h-14 rounded-full bg-[#FAFAFA] border border-[#EDEDED] flex items-center justify-center mb-4">
-          <Users className="w-6 h-6 text-[#999]" />
-        </div>
-
-        <h3 className="text-[16px] font-medium text-[#111] mb-1">
-          Aucune publication
-        </h3>
-
-        <p className="text-[14px] text-[#777] max-w-sm">
-          Soyez le premier à partager quelque chose avec votre communauté.
-        </p>
-      </motion.div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <EmptyState type="feed" />
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {posts.map((post, i) => (
-        <motion.div
-          key={post.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.03 }}
-        >
-          <PostCard post={post} onRefetch={refetch} />
-        </motion.div>
+    <div className="space-y-4 px-3 sm:px-0 pb-20">
+
+      {/* POSTS */}
+      {posts.map((post) => (
+        <PostCard key={post.id} post={post} onRefetch={refetch} />
       ))}
+
+      {/* SENTINEL */}
+      <div ref={ref} className="flex justify-center py-6">
+
+        {loadingMore && (
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Loader2 className="w-4 h-4 animate-spin text-green-500" />
+            Chargement...
+          </div>
+        )}
+
+        {!hasMore && posts.length > 0 && (
+          <p className="text-xs text-gray-400">
+            Vous êtes à jour 🎉
+          </p>
+        )}
+      </div>
+
     </div>
   )
 }

@@ -17,38 +17,46 @@ export function PostForm({ onPost }: { onPost?: () => void }) {
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const MAX = 4
+  const LIMIT = 500
+
+  /* UPLOAD */
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = e.target.files
-    if (!files || images.length >= 4) return
+    if (!files) return
 
     setUploading(true)
 
     const supabase = createClient()
 
     for (const file of Array.from(files)) {
-      if (images.length >= 4) break
+      if (images.length >= MAX) break
 
       const ext = file.name.split('.').pop()
-      const path = `posts/${Date.now()}.${ext}`
+      const path = `posts/${Date.now()}-${Math.random()}.${ext}`
 
       const { error } = await supabase.storage
         .from('images')
         .upload(path, file)
 
       if (!error) {
-        const { data } = supabase.storage.from('images').getPublicUrl(path)
-        setImages(prev => [...prev, data.publicUrl])
+        const { data } = supabase.storage
+          .from('images')
+          .getPublicUrl(path)
+
+        setImages((prev) => [...prev, data.publicUrl])
       }
     }
 
     setUploading(false)
   }
 
+  /* SUBMIT */
   const handleSubmit = async () => {
-    if (!content.trim()) {
-      toast.error('Ajoutez du contenu')
-      return
-    }
+    if (!content.trim()) return toast.error('Ajoute du contenu')
+    if (content.length > LIMIT) return
 
     setLoading(true)
 
@@ -66,65 +74,84 @@ export function PostForm({ onPost }: { onPost?: () => void }) {
   }
 
   return (
-    <div className="bg-white border border-[#ECECEC] rounded-2xl p-5 space-y-4 hover:shadow-sm transition">
+    <div className="bg-white border rounded-2xl p-4 sm:p-5 space-y-4">
 
-      {/* TOP INPUT */}
+      {/* INPUT AREA */}
       <div className="flex gap-3">
-        <Avatar className="w-9 h-9">
+
+        <Avatar className="w-9 h-9 shrink-0">
           <AvatarImage src={profile?.avatar_url || ''} />
-          <AvatarFallback className="bg-[#F5F5F5] text-[#666] text-xs">
+          <AvatarFallback>
             {profile?.fullname?.charAt(0)?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
 
         <Textarea
           value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder="Partagez quelque chose avec votre communauté..."
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Quoi de neuf ?"
           rows={3}
-          className="border-0 p-0 resize-none focus-visible:ring-0 text-[14px] placeholder:text-[#AAA] leading-relaxed"
+          className="
+            border-0 resize-none p-0
+            focus-visible:ring-0
+            text-sm sm:text-[14px]
+            placeholder:text-gray-400
+            leading-relaxed
+          "
         />
       </div>
 
       {/* IMAGES */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 ml-12">
+        <div className="grid grid-cols-2 gap-2 sm:ml-12">
+
           {images.map((url, i) => (
             <div
               key={i}
-              className="relative rounded-xl overflow-hidden aspect-video bg-[#F5F5F5]"
+              className="relative aspect-video rounded-xl overflow-hidden bg-gray-100"
             >
-              <img src={url} className="w-full h-full object-cover" />
+              <img
+                src={url}
+                className="w-full h-full object-cover"
+              />
 
               <button
                 onClick={() =>
-                  setImages(prev => prev.filter((_, j) => j !== i))
+                  setImages((prev) => prev.filter((_, j) => j !== i))
                 }
-                className="absolute top-2 right-2 bg-black/40 hover:bg-black/60 transition rounded-full p-1"
+                className="
+                  absolute top-2 right-2
+                  bg-black/40 hover:bg-black/60
+                  p-1 rounded-full
+                  transition
+                "
               >
                 <X className="w-3 h-3 text-white" />
               </button>
             </div>
           ))}
+
         </div>
       )}
 
       {/* ACTIONS */}
-      <div className="flex items-center justify-between ml-12 pt-3 border-t border-[#F2F2F2]">
+      <div className="flex items-center justify-between sm:ml-12 pt-3 border-t">
 
-        {/* UPLOAD */}
+        {/* LEFT */}
         <label
-          className={`flex items-center gap-2 text-[#888] hover:text-[#111] transition cursor-pointer ${
-            images.length >= 4 ? 'opacity-40 pointer-events-none' : ''
-          }`}
+          className={`
+            flex items-center gap-2 text-gray-500 hover:text-gray-900
+            cursor-pointer transition text-sm
+            ${images.length >= MAX ? 'opacity-40 pointer-events-none' : ''}
+          `}
         >
           <input
             type="file"
             accept="image/*"
             multiple
-            className="hidden"
+            hidden
             onChange={handleImageUpload}
-            disabled={uploading || images.length >= 4}
+            disabled={uploading || images.length >= MAX}
           />
 
           {uploading ? (
@@ -133,23 +160,37 @@ export function PostForm({ onPost }: { onPost?: () => void }) {
             <ImagePlus className="w-4 h-4" />
           )}
 
-          <span className="text-[13px]">Images</span>
+          Photos
         </label>
 
-        {/* RIGHT SIDE */}
-        <div className="flex items-center gap-4">
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
+
           <span
-            className={`text-[12px] ${
-              content.length > 500 ? 'text-red-500' : 'text-[#999]'
+            className={`text-xs ${
+              content.length > LIMIT
+                ? 'text-red-500'
+                : 'text-gray-400'
             }`}
           >
-            {content.length}/500
+            {content.length}/{LIMIT}
           </span>
 
           <button
             onClick={handleSubmit}
-            disabled={loading || !content.trim() || content.length > 500}
-            className="h-9 px-5 rounded-full bg-[#111] text-white text-sm hover:opacity-90 transition disabled:opacity-40 flex items-center gap-2"
+            disabled={
+              loading ||
+              !content.trim() ||
+              content.length > LIMIT
+            }
+            className="
+              h-9 px-5 rounded-full
+              bg-green-600 hover:bg-green-700
+              text-white text-sm
+              disabled:opacity-40
+              flex items-center gap-2
+              transition
+            "
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -157,6 +198,7 @@ export function PostForm({ onPost }: { onPost?: () => void }) {
               'Publier'
             )}
           </button>
+
         </div>
       </div>
     </div>

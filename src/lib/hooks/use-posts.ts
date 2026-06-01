@@ -1,61 +1,54 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getFeedPosts } from '@/lib/actions/posts'
 import type { Post } from '@/types/database'
+
+const PAGE_SIZE = 10
 
 export function usePosts() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(0)
   const hasFetched = useRef(false)
 
-  const fetchPosts = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+  const fetchPosts = useCallback(async (pageNum: number, replace = false) => {
+    if (pageNum === 0) setLoading(true)
+    else setLoadingMore(true)
 
-    const { data } = await supabase
-      .from('posts')
-      .select(`
-        *,
-        user:users(*),
-        likes(count),
-        comments(count)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(30)
+    const data = await getFeedPosts(pageNum * PAGE_SIZE, PAGE_SIZE + 1)
 
-    if (data) {
-      const postsWithMeta = await Promise.all(
-        data.map(async (post) => {
-          let is_liked = false
-          if (user) {
-            const { data: like } = await supabase
-              .from('likes')
-              .select('id')
-              .eq('post_id', post.id)
-              .eq('user_id', user.id)
-              .single()
-            is_liked = !!like
-          }
-          return {
-            ...post,
-            likes_count: post.likes[0]?.count || 0,
-            comments_count: post.comments[0]?.count || 0,
-            is_liked,
-          }
-        })
-      )
-      setPosts(postsWithMeta)
-    }
-    setLoading(false)
+    const hasNextPage = data.length > PAGE_SIZE
+    const sliced = data.slice(0, PAGE_SIZE)
+
+    setPosts(prev => replace ? sliced as unknown as Post[] : [...prev, ...sliced as unknown as Post[]])
+    setHasMore(hasNextPage)
+
+    if (pageNum === 0) setLoading(false)
+    else setLoadingMore(false)
   }, [])
 
   useEffect(() => {
     if (hasFetched.current) return
     hasFetched.current = true
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchPosts()
+    fetchPosts(0, true)
   }, [fetchPosts])
 
-  return { posts, loading, refetch: fetchPosts }
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchPosts(nextPage)
+  }, [loadingMore, hasMore, page, fetchPosts])
+
+  const refetch = useCallback(() => {
+    setPage(0)
+    hasFetched.current = false
+    fetchPosts(0, true)
+  }, [fetchPosts])
+
+  return { posts, loading, loadingMore, hasMore, loadMore, refetch }
 }

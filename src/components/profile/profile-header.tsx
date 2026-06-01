@@ -3,12 +3,19 @@
 import { useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { MapPin, MessageCircle, UserPlus, UserMinus } from 'lucide-react'
+import {
+  MapPin,
+  MessageCircle,
+  UserPlus,
+  UserMinus,
+  Camera,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/hooks/use-user'
 import { useRouter } from 'next/navigation'
 import { getOrCreateConversation } from '@/lib/actions/messages'
-import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import type { User } from '@/types/database'
 
 type ProfileHeaderProps = {
@@ -32,40 +39,42 @@ export function ProfileHeader({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [followers, setFollowers] = useState(followersCount)
   const [loading, setLoading] = useState(false)
+  const [coverUrl, setCoverUrl] = useState(profile.cover_url || '')
 
   const isOwnProfile = user?.id === profile.id
 
+  /* FOLLOW */
   const handleFollow = async () => {
-    if (!user) return
-
+    if (!user || loading) return
     setLoading(true)
 
     const supabase = createClient()
 
-    if (isFollowing) {
-      await supabase
-        .from('followers')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', profile.id)
+    try {
+      if (isFollowing) {
+        await supabase
+          .from('followers')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', profile.id)
 
-      setIsFollowing(false)
-      setFollowers(v => v - 1)
-    } else {
-      await supabase
-        .from('followers')
-        .insert({
+        setIsFollowing(false)
+        setFollowers((v) => v - 1)
+      } else {
+        await supabase.from('followers').insert({
           follower_id: user.id,
           following_id: profile.id,
         })
 
-      setIsFollowing(true)
-      setFollowers(v => v + 1)
+        setIsFollowing(true)
+        setFollowers((v) => v + 1)
+      }
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
+  /* MESSAGE */
   const handleMessage = async () => {
     try {
       const id = await getOrCreateConversation(profile.id)
@@ -75,132 +84,185 @@ export function ProfileHeader({
     }
   }
 
+  /* COVER UPLOAD */
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const supabase = createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const ext = file.name.split('.').pop()
+    const path = `covers/${user.id}/cover.${ext}`
+
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(path, file, { upsert: true })
+
+    if (!error) {
+      const { data } = supabase.storage.from('images').getPublicUrl(path)
+      const url = `${data.publicUrl}?t=${Date.now()}`
+
+      setCoverUrl(url)
+
+      await supabase
+        .from('users')
+        .update({ cover_url: url })
+        .eq('id', user.id)
+
+      toast.success('Couverture mise à jour')
+      router.refresh()
+    }
+  }
+
   return (
-    <div className="bg-white border border-[#ECECEC] rounded-2xl overflow-hidden">
+    <div className="bg-white border rounded-2xl overflow-hidden">
 
-      {/* BANNER */}
-      <div className="h-28 bg-gradient-to-br from-[#F5F5F5] to-[#EDEDED]" />
+      {/* COVER */}
+      <div className="relative h-40 sm:h-48 group overflow-hidden">
 
-      <div className="px-6 pb-6">
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            className="w-full h-full object-cover scale-105 group-hover:scale-110 transition duration-500"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600" />
+        )}
 
-        {/* HEADER ROW */}
-        <div className="flex items-end justify-between -mt-10">
+        <div className="absolute inset-0 bg-black/10" />
+
+        {isOwnProfile && (
+          <label className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-black/60 transition">
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleCoverUpload}
+            />
+            <Camera className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Modifier</span>
+          </label>
+        )}
+      </div>
+
+      {/* BODY */}
+      <div className="px-4 sm:px-6 pb-6">
+
+        {/* AVATAR + ACTIONS */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-10">
 
           {/* AVATAR */}
-          <Avatar className="w-20 h-20 border-4 border-white shadow-sm">
-            <AvatarImage src={profile.avatar_url || ''} />
-            <AvatarFallback className="bg-[#F5F5F5] text-[#666] text-xl font-medium">
-              {profile.fullname?.charAt(0)?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex justify-center sm:justify-start">
+            <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-white shadow-lg">
+              <AvatarImage src={profile.avatar_url || ''} />
+              <AvatarFallback className="bg-gray-100 text-gray-700 text-lg font-semibold">
+                {profile.fullname?.charAt(0)?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
 
           {/* ACTIONS */}
-          {!isOwnProfile ? (
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
+            {!isOwnProfile ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleMessage}
+                  className="w-full sm:w-auto rounded-full"
+                >
+                  <MessageCircle className="w-4 h-4 mr-1" />
+                  Message
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleFollow}
+                  disabled={loading}
+                  className="w-full sm:w-auto rounded-full"
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserMinus className="w-4 h-4 mr-1" />
+                      Suivi
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4 mr-1" />
+                      Suivre
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleMessage}
-                className="h-9 border-[#EAEAEA] text-[#555] hover:text-[#111]"
+                className="w-full sm:w-auto rounded-full"
+                onClick={() => router.push('/settings')}
               >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                Message
+                Modifier profil
               </Button>
-
-              <Button
-                size="sm"
-                onClick={handleFollow}
-                disabled={loading}
-                className={`h-9 px-4 rounded-full transition ${
-                  isFollowing
-                    ? 'bg-[#F5F5F5] text-[#111] hover:bg-[#EAEAEA]'
-                    : 'bg-[#111] text-white hover:opacity-90'
-                }`}
-              >
-                {isFollowing ? (
-                  <>
-                    <UserMinus className="w-4 h-4 mr-1" />
-                    Suivi
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Suivre
-                  </>
-                )}
-              </Button>
-
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => router.push('/settings')}
-              className="h-9 border-[#EAEAEA] text-[#555]"
-            >
-              Modifier
-            </Button>
-          )}
+            )}
+          </div>
         </div>
 
         {/* INFO */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 text-center sm:text-left space-y-2">
 
-          <h1 className="text-xl font-medium text-[#111]">
+          <h1 className="text-xl font-semibold text-gray-900">
             {profile.fullname}
           </h1>
 
           {profile.bio && (
-            <p className="text-sm text-[#666] leading-relaxed max-w-xl">
+            <p className="text-sm text-gray-600 leading-relaxed">
               {profile.bio}
             </p>
           )}
 
           {/* LOCATION */}
-          <div className="flex flex-wrap gap-3 text-xs text-[#888] pt-1">
+          <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-xs text-gray-500">
 
             {profile.current_country && (
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
-                {profile.city ? `${profile.city}, ` : ''}
-                {profile.current_country}
+                {profile.city}, {profile.current_country}
               </span>
             )}
 
             {profile.origin_country && (
               <span>🌍 {profile.origin_country}</span>
             )}
-
           </div>
 
           {/* STATS */}
-          <div className="flex gap-8 pt-4">
+          <div className="grid grid-cols-3 gap-4 pt-4 text-center sm:text-left">
 
             <div>
-              <p className="text-sm font-medium text-[#111]">
-                {postsCount}
-              </p>
-              <p className="text-xs text-[#777]">Publications</p>
+              <p className="text-sm font-semibold text-gray-900">{postsCount}</p>
+              <p className="text-xs text-gray-500">Posts</p>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-[#111]">
-                {followers}
-              </p>
-              <p className="text-xs text-[#777]">Abonnés</p>
+              <p className="text-sm font-semibold text-gray-900">{followers}</p>
+              <p className="text-xs text-gray-500">Followers</p>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-[#111]">
-                {followingCount}
-              </p>
-              <p className="text-xs text-[#777]">Abonnements</p>
+              <p className="text-sm font-semibold text-gray-900">{followingCount}</p>
+              <p className="text-xs text-gray-500">Following</p>
             </div>
 
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   )
